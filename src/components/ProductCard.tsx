@@ -1,4 +1,3 @@
-import React from "react";
 import { Product } from "../types";
 
 const ProductCard = (props: Product) => {
