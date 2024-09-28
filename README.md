@@ -1,1 +1,0 @@
-# digtial-store
