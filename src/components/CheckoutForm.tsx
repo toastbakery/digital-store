@@ -57,10 +57,11 @@ export const CheckoutForm = () => {
 
       const { error } = await stripe.confirmPayment({
         // `elements` instance that was used to create the Payment Element
+        //  Since using HashRouter, URLs will always look like http://localhost:5173/#/success
         elements,
         clientSecret,
         confirmParams: {
-          return_url: `${window.location.origin}/success`,
+          return_url: `${window.location.origin}/#/success`,
         },
       });
 

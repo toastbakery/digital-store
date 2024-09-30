@@ -5,6 +5,7 @@ import thumbnailImg from "./assets/thumbnail.png";
 import { Routes, Route, Outlet } from "react-router-dom";
 import Checkout from "./pages/Checkout";
 import Success from "./components/Success";
+import { Link } from "react-router-dom";
 
 function Layout() {
   return (
@@ -21,7 +22,6 @@ function App() {
       <Route path="/" element={<Layout />}>
         <Route
           index
-          path="/"
           element={
             <Product
               title="Complete Web Development Bundle"
@@ -47,12 +47,12 @@ function App() {
                   <li>How to build full stack applications</li>
                 </ul>
                 <br></br>
-                <a
-                  href="/"
+                <Link
+                  to="/"
                   className="text-indigo-500 font-bold text-underline"
                 >
                   💫 Preview here 💫
-                </a>
+                </Link>
               </div>
             </Product>
           }

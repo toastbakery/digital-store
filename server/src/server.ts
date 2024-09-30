@@ -9,7 +9,13 @@ import sendOrderEmail from "./send-order-email"; // Import send-order-email modu
 dotenv.config();
 
 // Initialize Firebase Admin SDK
-const serviceAccount = require("../serviceAccountKey.json"); // Adjust the path as needed
+// Define the service account object
+const serviceAccount: admin.ServiceAccount = {
+  projectId: process.env.FIREBASE_PROJECT_ID as string,
+  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n") as string,
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL as string,
+};
+//const serviceAccount = require("../serviceAccountKey.json");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -56,12 +62,14 @@ app.post(
     // Ensure dataObject is a PaymentIntent
     if (dataObject && "id" in dataObject && typeof dataObject.id === "string") {
       const paymentId = dataObject.id;
+      console.log("paymentId", paymentId);
 
       const eventType = event.type;
       let paymentConfirmed;
 
       if (eventType === "payment_intent.succeeded") {
         paymentConfirmed = true;
+        console.log("eventType", eventType);
       } else if (eventType === "payment_intent.payment_failed") {
         paymentConfirmed = false;
       } else {
