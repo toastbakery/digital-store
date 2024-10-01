@@ -30,8 +30,24 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable CORS for your frontend origin
-app.use(cors({ origin: "http://localhost:5173" }));
+const allowedOrigins = [
+  "http://localhost:5173", // Local development environment
+  "https://toastbakery.github.io", // GitHub Pages production environment
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true, // If you're using cookies or credentials
+  })
+);
 
 // Stripe Webhook Handler
 app.post(
