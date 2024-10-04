@@ -35,7 +35,9 @@ const allowedOrigins = [
   "https://toastbakery.github.io", // GitHub Pages production environment
 ];
 
-app.use(
+// Preflight request handler for CORS
+app.options(
+  "*",
   cors({
     origin: function (origin, callback) {
       if (!origin || allowedOrigins.includes(origin)) {
@@ -45,7 +47,24 @@ app.use(
       }
     },
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    credentials: true, // If you're using cookies or credentials
+    allowedHeaders: ["Content-Type"],
+    credentials: true,
+  })
+);
+
+// Or a simpler version handling all CORS requests
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS", // Ensure OPTIONS method is included
+    allowedHeaders: ["Content-Type"],
+    credentials: true,
   })
 );
 
