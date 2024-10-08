@@ -33,7 +33,7 @@ export const CheckoutForm = () => {
     try {
       // Create the PaymentIntent and obtain clientSecret from your server endpoint
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/create-payment-intent`,
+        `${import.meta.env.VITE_API_URL}/api/create-payment-intent`,
         {
           method: "POST",
           headers: {

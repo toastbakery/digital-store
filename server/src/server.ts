@@ -35,23 +35,6 @@ const allowedOrigins = [
   "https://toastbakery.github.io", // GitHub Pages production environment
 ];
 
-// Preflight request handler for CORS
-app.options(
-  "*",
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    allowedHeaders: ["Content-Type"],
-    credentials: true,
-  })
-);
-
 // Or a simpler version handling all CORS requests
 app.use(
   cors({
@@ -157,7 +140,7 @@ app.post(
 app.use(express.json());
 
 // Route to create PaymentIntent
-app.post("/api/create-payment-intent", async (req, res) => {
+app.post("/create-payment-intent", async (req, res) => {
   const { email, amount, currency } = req.body;
 
   console.log("Received create-payment-intent request:", req.body);
