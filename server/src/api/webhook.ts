@@ -2,6 +2,10 @@ import { db, admin } from "./firebase";
 import Stripe from "stripe";
 import sendOrderEmail from "../send-order-email";
 import { IncomingMessage, ServerResponse } from "http"; // Import these Node.js types
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2024-06-20",
@@ -27,10 +31,21 @@ export default async function handler(
   req: IncomingMessage,
   res: ServerResponse
 ) {
+  // Ensure we only accept POST requests from Stripe
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    res.writeHead(405, { "Content-Type": "application/json" });
+    return res.end(
+      JSON.stringify({ error: `Method ${req.method} Not Allowed` })
+    );
+  }
+
   const sig = req.headers["stripe-signature"] as string;
 
   try {
     const rawBody = await getRawBody(req);
+
+    // Verify the Stripe event
     const event = stripe.webhooks.constructEvent(
       rawBody,
       sig,
@@ -41,39 +56,44 @@ export default async function handler(
     const eventType = event.type;
 
     if (eventType === "payment_intent.succeeded") {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      const paymentIntent = dataObject as Stripe.PaymentIntent;
       const paymentId = paymentIntent.id;
 
+      // Retrieve payment from Firestore by payment ID
       const paymentRef = db
         .collection("payments")
         .where("payment_id", "==", paymentId);
       const paymentSnapshot = await paymentRef.get();
 
       if (paymentSnapshot.empty) {
-        res.statusCode = 404;
+        res.writeHead(404, { "Content-Type": "application/json" });
         return res.end(JSON.stringify({ message: "Payment not found" }));
       }
 
       const paymentRecord = paymentSnapshot.docs[0];
+
+      // Update the payment record to confirm the payment
       await paymentRecord.ref.update({ isConfirmed: true });
 
       const paymentData = paymentRecord.data();
+
+      // Send order confirmation email
       await sendOrderEmail({ email: paymentData.user_email });
 
-      res.statusCode = 200;
+      res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ message: "Payment confirmed successfully" }));
     } else {
-      res.statusCode = 400;
+      res.writeHead(400, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ message: "Unknown event type" }));
     }
   } catch (err) {
     if (err instanceof Error) {
-      // Now TypeScript knows 'err' is an Error and has a 'message' property
-      res.statusCode = 400;
+      console.error("Error handling Stripe webhook:", err.message);
+
+      res.writeHead(400, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Webhook error", details: err.message }));
     } else {
-      // Handle cases where 'err' is not an instance of Error
-      res.statusCode = 400;
+      res.writeHead(400, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Unknown error occurred" }));
     }
   }

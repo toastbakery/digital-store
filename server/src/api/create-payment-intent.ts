@@ -10,6 +10,18 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 });
 
 export default async (req: IncomingMessage, res: ServerResponse) => {
+  // Set CORS headers to allow requests from GitHub Pages
+  res.setHeader("Access-Control-Allow-Origin", "https://toastbakery.github.io");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  // Handle OPTIONS method for preflight requests
+  if (req.method === "OPTIONS") {
+    res.writeHead(200);
+    return res.end();
+  }
+
   if (req.method === "POST") {
     let body = "";
 
@@ -19,22 +31,22 @@ export default async (req: IncomingMessage, res: ServerResponse) => {
     });
 
     req.on("end", async () => {
-      const { email, amount, currency } = JSON.parse(body);
-
-      console.log("Received create-payment-intent request:", {
-        email,
-        amount,
-        currency,
-      });
-
-      if (!email || !amount || !currency) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        return res.end(
-          JSON.stringify({ error: "Missing required parameters" })
-        );
-      }
-
       try {
+        const { email, amount, currency } = JSON.parse(body);
+
+        console.log("Received create-payment-intent request:", {
+          email,
+          amount,
+          currency,
+        });
+
+        if (!email || !amount || !currency) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          return res.end(
+            JSON.stringify({ error: "Missing required parameters" })
+          );
+        }
+
         const paymentIntent = await stripe.paymentIntents.create({
           amount,
           currency,
@@ -59,6 +71,7 @@ export default async (req: IncomingMessage, res: ServerResponse) => {
           })
         );
       } catch (error) {
+        console.error("Error creating payment intent:", error);
         res.writeHead(500, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Failed to create payment intent" }));
       }
